@@ -34,15 +34,16 @@ regd_users.post("/login", (req, res) => {
   }
 
   const token = jwt.sign({ data: username }, "access", { expiresIn: "1h" });
-  req.session.authorization = { token, username };
+  req.session.authorization = { accessToken: token };
   return res.status(200).json({ message: "User successfully logged in", token: token });
+
 });
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
   const isbn = req.params.isbn;
   const review = req.body.review;
-  const username = req.user.username;
+  const username = req.user?.data;
 
   if (!review || review.trim() === "") {
     return res.status(400).json({ message: "Review content cannot be empty" });
@@ -55,6 +56,26 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   books[isbn].reviews[username] = review.trim();
 
   return res.status(200).json({ message: "Review has been added / updated successfully", ...books[isbn] })
+});
+
+
+// delete 
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  const isbn = req.params.isbn;
+  const username = req.user?.data;
+
+  if (!books[isbn]) {
+    return res.status(404).json({ message: "Book not found" });
+  }
+
+  if (!books[isbn].reviews[username]) {
+    return res.status(403).json({
+      message: "You can only delete your own review"
+    });
+  }
+
+  delete books[isbn].reviews[username];
+  return res.status(200).json({ message: "Review deleted successfully", ...books[isbn] });
 });
 
 module.exports.authenticated = regd_users;

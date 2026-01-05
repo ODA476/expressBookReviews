@@ -12,7 +12,7 @@ app.use("/customer", session({ secret: "fingerprint_customer", resave: true, sav
 
 app.use("/customer/auth/*", function auth(req, res, next) {
   //Write the authenication mechanism here
-  if (req.session.authorization) {
+  if (req.session.authorization?.accessToken) {
     let token = req.session.authorization['accessToken'];
 
     // Verify JWT token 
@@ -25,7 +25,9 @@ app.use("/customer/auth/*", function auth(req, res, next) {
       }
     });
   } else {
-    return res.status(403).json({ message: "User not logged in" });
+    return res.status(401).json({
+      message: "User not logged in"
+    });
   }
 });
 
